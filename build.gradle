@@ -1,8 +1,17 @@
+buildscript {
+    ext {
+        queryDslVersion="5.1.0"
+    }
+}
+
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.3'
+    id 'org.springframework.boot' version '3.3.4'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'io.freefair.lombok' version '8.6' // Lombok Gradle Plugin 추가
 }
+
+def querydslDir = "$buildDir/generated/querydsl"
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
@@ -24,18 +33,64 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper:11.0.1'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-web-services'
-    compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
-    annotationProcessor 'org.projectlombok:lombok'
+    // compileOnly 'org.projectlombok:lombok' // Lombok Plugin 사용 시 제거
+//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    // annotationProcessor 'org.projectlombok:lombok' // Lombok Plugin 사용 시 제거
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // testCompileOnly 'org.projectlombok:lombok' // Lombok Plugin 사용 시 제거
+    // testAnnotationProcessor 'org.projectlombok:lombok' // Lombok Plugin 사용 시 제거
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:3.4.0'
+
+    implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+    annotationProcessor(
+            "jakarta.persistence:jakarta.persistence-api",
+            "jakarta.annotation:jakarta.annotation-api",
+            "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
+
+    implementation 'org.modelmapper:modelmapper:3.0.0'
+    implementation 'org.springframework.boot:spring-boot-starter-validation:3.4.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    testImplementation 'com.h2database:h2'
+
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
+
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6:3.1.1.RELEASE'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation group:'net.coobird',name:'thumbnailator',version:'0.4.20'
+
+    implementation 'com.oracle.database.jdbc:ojdbc8:19.3.0.0'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Lombok Plugin이 자동으로 sourceSets을 구성해주므로, 이 부분은 QueryDSL을 위해 유지
+// 다만, QueryDSL이 생성하는 Q클래스가 어디에 생성되는지 확인하고 필요하면 경로를 조정해야 합니다.
+sourceSets{
+    main {
+        java {
+            srcDirs= ["$projectDir/src/main/java", "$projectDir/build/generated/querydsl"] // QueryDSL generated sources
+        }
+    }
+}
+// compileJava.dependsOn('clean') // 성능 저하를 일으킬 수 있어 제거
+
+// QueryDSL Q-Class 생성을 위한 설정 (필요시 추가)
+// tasks.withType(JavaCompile) {
+//     options.generatedSourceOutputDirectory = file(querydslDir)
+// }
+// clean.doLast {
+//     file(querydslDir).deleteDir()
+// }
